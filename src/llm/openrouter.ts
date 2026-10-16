@@ -82,8 +82,16 @@ async function complete(
   if (response.status === 400 && jsonMode)
     return complete(settings, user, false);
   if (!response.ok) {
-    const detail = (await response.text()).slice(0, 240);
-    throw new Error(`OpenRouter ${response.status}: ${detail}`);
+    const body = await response.text();
+
+    const limit =
+      response.status === 403 && body.includes("Key limit exceeded");
+
+    throw new Error(
+      limit
+        ? "OpenRouter key is over its limit."
+        : `OpenRouter ${response.status}.`,
+    );
   }
   const payload = (await response.json()) as {
     choices?: Array<{ message?: { content?: unknown } }>;
